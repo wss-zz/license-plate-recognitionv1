@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智能车牌识别一体闸机系统</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--line:#e6ebf2;--txt:#1d2433;--dim:#6b7789;--acc:#2563eb;--ok:#16a34a;--warn:#f59e0b;--bad:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.6 "Microsoft YaHei","Segoe UI",system-ui,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 22px;background:#0f172a;color:#fff}
+header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.5px}
+header .sub{color:#93a4c0;font-size:12px}
+header .sp{flex:1}
+header .clock{font-variant-numeric:tabular-nums;color:#cbd5e1;font-size:13px}
+header .live{display:flex;align-items:center;gap:6px;font-size:12px;color:#6ee7b7}
+header .live i{width:8px;height:8px;border-radius:50%;background:#34d399;display:inline-block;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;padding:14px;max-width:1560px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.card h2{margin:0;padding:11px 16px;font-size:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.card h2 .tag{font-weight:400;font-size:12px;color:var(--dim);margin-left:auto}
+.card .bd{padding:14px 16px}
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lane .view{position:relative;background:#0b1220;border-radius:10px;overflow:hidden;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center}
+.lane .view img{width:100%;height:100%;object-fit:contain;display:block}
+.lane .view .empty{color:#4b5b73;font-size:13px}
+.badge{position:absolute;left:10px;top:10px;background:rgba(15,23,42,.78);color:#fff;border-radius:8px;padding:3px 9px;font-size:12px;display:flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:#64748b;display:inline-block}
+.dot.ok{background:#22c55e}.dot.warn{background:#f59e0b}.dot.bad{background:#ef4444}
+.plate-box{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:#0f172a;color:#7dd3fc;
+  border:2px solid #38bdf8;border-radius:8px;padding:4px 14px;font:700 22px/1.3 "Consolas",monospace;letter-spacing:2px;white-space:nowrap}
+.plate-box.green{color:#86efac;border-color:#22c55e}
+.plate-box.yellow{color:#fde68a;border-color:#eab308}
+.gate{position:absolute;right:14px;top:14px;width:10px;height:74px;background:#334155;border-radius:3px;overflow:hidden}
+.gate i{position:absolute;inset:0;background:repeating-linear-gradient(45deg,#ef4444 0 8px,#fff 8px 16px);transition:transform .45s ease}
+.gate.open i{transform:translateX(100%)}
+.msg{margin-top:9px;font-size:13px;color:var(--dim);min-height:20px}
+.msg.alarm{color:var(--bad);font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;cursor:pointer;transition:.15s}
+button:hover{border-color:#c3cfe0;background:#f8fafc}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button.primary:hover{background:#1d4ed8}
+button.danger{color:var(--bad);border-color:#fecaca;background:#fff5f5}
+button:disabled{opacity:.5;cursor:not-allowed}
+.metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.metric{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px}
+.metric b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.metric span{font-size:12px;color:var(--dim)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:64px;margin-top:12px}
+.bars i{flex:1;background:#bfdbfe;border-radius:2px 2px 0 0;min-height:2px}
+.bars i.hot{background:var(--acc)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--dim);font-weight:500;background:#fafbfd;position:sticky;top:0}
+tr:hover td{background:#fafcff}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;background:#eef2ff;color:#3730a3}
+.pill.in{background:#ecfdf5;color:#047857}.pill.out{background:#eff6ff;color:#1d4ed8}
+.pill.abnormal{background:#fef2f2;color:#b91c1c}
+.tabs{display:flex;gap:4px;padding:0 8px;border-bottom:1px solid var(--line);overflow:auto}
+.tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:10px 12px;color:var(--dim)}
+.tabs button.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+.pane{display:none;padding:12px 14px}.pane.on{display:block}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
+.thumb{width:66px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:pointer;background:#0b1220}
+.vbig{position:fixed;inset:0;background:rgba(9,14,26,.86);display:none;align-items:center;justify-content:center;z-index:50}
+.vbig img{max-width:92vw;max-height:88vh;border-radius:10px}
+.vbig.on{display:flex}
+.seg{font-size:12px;color:var(--dim)}
+.fee{font-size:30px;font-weight:700;color:var(--bad);font-variant-numeric:tabular-nums}
+.fee.zero{color:var(--ok)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:13px;margin-top:8px}
+.kv span{color:var(--dim)}
+.pager{display:flex;gap:6px;justify-content:flex-end;padding-top:10px;align-items:center;font-size:13px;color:var(--dim)}
+.toast{position:fixed;right:18px;bottom:18px;background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transform:translateY(8px);transition:.25s;z-index:60;max-width:min(520px,80vw)}
+.toast.on{opacity:1;transform:none}
+.loading{display:inline-block;width:12px;height:12px;border:2px solid #c7d2fe;border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:1180px){.wrap{grid-template-columns:1fr}.lanes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>智能车牌识别一体闸机系统</h1>
+<div class="live"><i></i>实时监控</div>
+  <span class="sub">检测 YOLO12n · 四点矫正 CornerNet · 识别 LPRNet+PP-OCRv5</span>
+  <span class="sp"></span>
+  <span class="clock" id="clock">--</span>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="lanes" id="lanes"></div>
+    <div class="card" style="margin-top:14px">
+      <div class="tabs" id="tabs">
+        <button class="on" data-p="rec">通行记录</button>
+        <button data-p="rep">统计报表</button>
+        <button data-p="cases">计费规则与用例</button>
+        <button data-p="evt">事件日志</button>
+      </div>
+      <div class="pane on" id="p-rec">
+        <div class="row" style="margin-bottom:10px">
+          <input id="q" placeholder="车牌 / 异常关键字" style="width:200px">
+          <select id="st"><option value="">全部状态</option><option value="in">在场</option><option value="out">已出场</option><option value="abnormal">异常</option></select>
+          <button onclick="loadRecords(1)">查询</button>
+          <span class="seg" id="recInfo"></span>
+        </div>
+        <table><thead><tr><th>#</th><th>车牌</th><th>车道</th><th>入场</th><th>出场</th><th>时长</th><th>费用</th><th>状态</th><th>抓拍</th></tr></thead><tbody id="recBody"></tbody></table>
+        <div class="pager"><button onclick="loadRecords(recPage-1)">上一页</button><span id="pg"></span><button onclick="loadRecords(recPage+1)">下一页</button></div>
+      </div>
+      <div class="pane" id="p-rep">
+        <div class="row" style="margin-bottom:10px">
+          <select id="rp"><option value="day">今日</option><option value="week">本周</option><option value="month">本月</option></select>
+          <button onclick="loadReport()">刷新</button>
+          <span class="seg" id="repInfo"></span>
+        </div>
+        <table><thead><tr><th>日期</th><th>入场车次</th><th>结算笔数</th><th>收入 (元)</th></tr></thead><tbody id="repBody"></tbody></table>
+      </div>
+      <div class="pane" id="p-cases">
+        <div id="caseInfo" class="seg" style="margin-bottom:8px"></div>
+        <table><thead><tr><th>用例</th><th>说明</th><th>期望</th><th>实得</th><th>结果</th></tr></thead><tbody id="caseBody"></tbody></table>
+      </div>
+      <div class="pane" id="p-evt">
+        <table><thead><tr><th>时间</th><th>车道</th><th>级别</th><th>代码</th><th>内容</th></tr></thead><tbody id="evtBody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>本次结算 <span class="tag" id="billPlate">—</span></h2>
+      <div class="bd" id="billBox"><div class="seg">尚无结算数据，点击车道上的“模拟出场”。</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>实时看板 <span class="tag" id="today"></span></h2>
+      <div class="bd">
+        <div class="metrics">
+          <div class="metric"><b id="mParked">0</b><span>在场车辆</span></div>
+          <div class="metric"><b id="mIncome">0.00</b><span>今日实收 (元)</span></div>
+          <div class="metric"><b id="mUnpaid">0.00</b><span>应收未收 (元)</span></div>
+          <div class="metric"><b id="mEntries">0</b><span>今日车次</span></div>
+        </div>
+        <div class="bars" id="bars"></div>
+        <div class="seg" style="margin-top:6px">各时段进场车流（00–23 时）</div>
+        <div class="kv" style="margin-top:12px">
+          <span>异常流水</span><b id="mAbn">0</b>
+          <span>演示图库</span><b id="mPool">—</b>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>在场车辆</h2>
+      <div class="bd" style="max-height:260px;overflow:auto"><table><tbody id="parkedBody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="vbig" id="vbig" onclick="this.classList.remove('on')"><img id="vbigImg" src=""></div>
+
+<script>
+const S={lanes:[],stats:null};
+const fmt=(t)=>t||'—';
+function toast(m,ms=2600){const el=document.getElementById('toast');el.textContent=m;el.classList.add('on');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('on'),ms)}
+async function api(path,opt){const r=await fetch(path,opt);if(!r.ok)throw new Error(await r.text());return r.json()}
+function post(path,body){return api(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})})}
+
+function laneCard(l){
+  const dot=l.alarm?'bad':(l.state==='open'?'ok':(l.state==='idle'?'':'warn'));
+  const st={idle:'待机',open:'闸杆抬起 · 通行中',closed:'已落杆',alarm:'异常',arriving:'识别中'}[l.state]||l.state;
+  const col=l.color==='green'?'green':(l.color==='yellow'?'yellow':'');
+  return `<div class="card lane">
+    <h2>${l.name}<span class="tag"><span class="dot ${dot}"></span> ${st} · ${l.ts||''}</span></h2>
+    <div class="bd">
+      <div class="view">
+        ${l.snap?`<img src="${l.snap}" onclick="zoom('${l.snap}')">`:'<div class="empty">等待车辆…</div>'}
+        <div class="badge"><span class="dot ${dot}"></span>${st}</div>
+        <div class="gate ${l.gate?'open':''}"><i></i></div>
+        ${l.plate?`<div class="plate-box ${col}">${l.plate}</div>`:''}
+      </div>
+      <div class="msg ${l.alarm?'alarm':''}">${l.msg||''}</div>
+      <div class="btns">
+        <button class="primary" onclick="auto(${l.id},'in')">模拟入场</button>
+        <button class="primary" onclick="auto(${l.id},'out')">模拟出场</button>
+        <button onclick="alarm(${l.id},'TAILGATING')">跟车告警</button>
+        <button onclick="alarm(${l.id},'NO_DROP')">未落闸</button>
+        <button onclick="clearAlarm(${l.id})">复位</button>
+      </div>
+    </div></div>`;
+}
+function render(){
+  document.getElementById('lanes').innerHTML=S.lanes.map(laneCard).join('');
+  const s=S.stats||{};
+  document.getElementById('mParked').textContent=s.parked??0;
+  document.getElementById('mIncome').textContent=(s.income??0).toFixed(2);
+  document.getElementById('mUnpaid').textContent=(s.unpaid??0).toFixed(2);
+  document.getElementById('mEntries').textContent=s.entries??0;
+  document.getElementById('mAbn').textContent=s.abnormal??0;
+  document.getElementById('today').textContent=s.date||'';
+  const h=s.hourly||[];const mx=Math.max(1,...h.map(x=>x.n));
+  document.getElementById('bars').innerHTML=h.map(x=>`<i class="${x.n?'hot':''}" style="height:${Math.max(2,x.n/mx*64)}px" title="${x.h}时 ${x.n} 车次"></i>`).join('');
+  document.getElementById('parkedBody').innerHTML=(S.parked||[]).map(p=>`<tr><td><b>${p.plate||'未识别'}</b></td><td class="seg">${p.entry_time.slice(5,16)}</td><td class="seg">${p.lane}道</td></tr>`).join('')||'<tr><td class="seg">暂无在场车辆</td></tr>';
+}
+async function refresh(){try{const s=await api('/api/state');S.lanes=s.lanes;S.stats=s.stats;S.parked=s.parked;
+  const p=document.getElementById('mPool');if(p)p.textContent=(s.pool??0)+' 张';
+  if(s.last_bill&&s.last_bill.bill&&Object.keys(s.last_bill.bill).length){showBill(s.last_bill.bill,s.last_bill.vehicle)}
+  render()}catch(e){}}
+function zoom(src){document.getElementById('vbigImg').src=src;document.getElementById('vbig').classList.add('on')}
+async function auto(lane,mode){
+  const t=document.getElementById('toast');toast('识别中…',20000);
+  try{
+    const r=await post('/api/auto',{lane,mode});
+    if(!r.ok){toast('⚠ '+(r.msg||'失败'));renderLane(r.lane);return}
+    toast(`${mode==='in'?'入场':'出场'}：${r.plate} · ${r.ms}ms`);
+    if(r.bill)showBill(r.bill,r.vehicle);
+    refresh();loadRecords(1);
+  }catch(e){toast('失败：'+e.message)}
+}
+function renderLane(l){if(!l)return;const i=S.lanes.findIndex(x=>x.id===l.id);if(i>=0)S.lanes[i]=l;render()}
+function showBill(b,v){
+  document.getElementById('billPlate').textContent=b.plate;
+  const segs=(b.segments||[]).map(s=>`<tr><td>${s.kind==='day'?'白天':'夜间'}</td><td>${s.from}–${s.to}</td><td>${s.minutes}</td><td>${s.bill_min}</td><td>${s.units}</td><td>${s.rate}</td><td>${s.fee.toFixed(2)}</td></tr>`).join('');
+  document.getElementById('billBox').innerHTML=`
+    <div class="fee ${b.fee>0?'':'zero'}">￥${b.fee.toFixed(2)}</div>
+    <div class="kv">
+      <span>入场 / 出场</span><b>${b.entry} → ${b.exit}</b>
+      <span>停放时长</span><b>${b.parked_min} 分钟</b>
+      <span>计费规则</span><b>${b.rule==='time'?'计时（分时段）':b.rule}</b>
+      <span>未封顶金额</span><b>￥${b.uncapped.toFixed(2)}</b>
+      <span>封顶额度</span><b>￥${b.cap.toFixed(2)}</b>
+      <span>账户余额</span><b>￥${(v?.balance??0).toFixed(2)}${v?.monthly_until?` · 月卡至 ${v.monthly_until}`:''}</b>
+    </div>
+    ${segs?`<table style="margin-top:10px;font-size:11.5px;table-layout:auto"><thead><tr><th style="white-space:nowrap;padding:4px 3px">时段</th><th style="white-space:nowrap;padding:4px 3px">区间</th><th style="white-space:nowrap;padding:4px 3px">停放</th><th style="white-space:nowrap;padding:4px 3px">计费</th><th style="white-space:nowrap;padding:4px 3px">单位</th><th style="white-space:nowrap;padding:4px 3px">单价</th><th style="white-space:nowrap;padding:4px 3px">金额</th></tr></thead><tbody>${segs}</tbody></table>`:''}
+    <div class="seg" style="margin-top:8px">${(b.notes||[]).join(' · ')}</div>`;
+}
+let recPage=1;
+async function loadRecords(p){
+  if(p<1)return;recPage=p;
+  const q=document.getElementById('q').value.trim(),st=document.getElementById('st').value;
+  const r=await api(`/api/records?page=${p}&size=8&q=${encodeURIComponent(q)}&status=${st}`);
+  const pages=Math.max(1,Math.ceil(r.total/r.size));
+  document.getElementById('pg').textContent=`${r.page} / ${pages}`;
+  document.getElementById('recInfo').textContent=`共 ${r.total} 条`;
+  document.getElementById('recBody').innerHTML=r.rows.map(x=>{
+    let dur='—';
+    if(x.exit_time&&x.entry_time){const m=Math.round((new Date(x.exit_time)-new Date(x.entry_time))/60000);dur=m>=60?`${Math.floor(m/60)}h${m%60}m`:`${m}m`}
+    const pill=x.status==='in'?'in':(x.status==='out'?'out':'abnormal');
+    const nm={in:'在场',out:'已出场',abnormal:'异常'}[x.status]||x.status;
+    return `<tr><td>${x.id}</td><td><b>${x.plate||'未识别'}</b></td><td>${x.lane}</td><td class="seg">${fmt(x.entry_time).slice(5,16)}</td><td class="seg">${fmt(x.exit_time).slice(5,16)}</td><td>${dur}</td><td>￥${(x.fee??0).toFixed(2)}</td>
+      <td><span class="pill ${pill}" title="${x.abnormal||''}">${nm}</span></td>
+      <td>${x.snap_in?`<img class="thumb" src="${x.snap_in}" onclick="zoom('${x.snap_in}')">`:''}${x.snap_out?`<img class="thumb" src="${x.snap_out}" onclick="zoom('${x.snap_out}')">`:''}</td></tr>`}).join('')||'<tr><td colspan="9" class="seg">无记录</td></tr>';
+}
+async function loadReport(){
+  const p=document.getElementById('rp').value;const r=await api('/api/report?period='+p);
+  document.getElementById('repInfo').textContent=`${r.start} ~ ${r.end} · 合计 ￥${r.total_income.toFixed(2)} · ${r.total_entries} 车次`;
+  document.getElementById('repBody').innerHTML=r.rows.map(x=>`<tr><td>${x.date}</td><td>${x.entries}</td><td>${x.bills}</td><td>￥${x.income.toFixed(2)}</td></tr>`).join('');
+}
+async function loadCases(){
+  const r=await api('/api/billing_cases');
+  document.getElementById('caseInfo').innerHTML=`<b>${r.passed}/${r.total}</b> 通过 · 规则：15 分钟免费，白天(8–20)5 元/h、夜间 3 元/h，按 30 分钟计费单位，每 24h 封顶 60 元 · 按次 10 元 · 月卡 300 元`;
+  document.getElementById('caseBody').innerHTML=r.cases.map(c=>{
+    const w=c.want===null?'异常登记':`￥${c.want.toFixed(2)}`;
+    const g=c.got===null?'异常登记':`￥${c.got.toFixed(2)}`;
+    return `<tr><td>${c.name}</td><td class="seg">${c.why}</td><td>${w}</td><td>${g}</td><td>${c.ok?'<span class="pill in">通过</span>':'<span class="pill abnormal">失败</span>'}</td></tr>`}).join('');
+}
+async function loadEvents(){
+  const r=await api('/api/events');
+  document.getElementById('evtBody').innerHTML=r.rows.map(e=>`<tr><td class="seg">${e.ts}</td><td>${e.lane}</td><td>${e.level}</td><td>${e.code}</td><td>${e.msg}</td></tr>`).join('');
+}
+async function alarm(lane,code){await post('/api/alarm',{lane,code});refresh()}
+async function clearAlarm(lane){await post('/api/clear_alarm',{lane});refresh()}
+document.getElementById('tabs').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  [...document.querySelectorAll('#tabs button')].forEach(x=>x.classList.toggle('on',x===b));
+  ['rec','rep','cases','evt'].forEach(k=>document.getElementById('p-'+k).classList.toggle('on',b.dataset.p===k));
+  if(b.dataset.p==='rep')loadReport();if(b.dataset.p==='cases')loadCases();if(b.dataset.p==='evt')loadEvents();
+});
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleString('zh-CN',{hour12:false})},1000);
+refresh();loadRecords(1);loadEvents();
+setInterval(refresh,2000);
+setInterval(()=>{loadRecords(recPage)},4000);
+</script>
+</body>
+</html>

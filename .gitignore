@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 运行产物
+system/data/*.db
+system/data/snaps/
+runs/
+logs/
+*.log
+
+# 模型权重（体积大，单独发布）
+*.pt
+*.pth
+*.onnx
+*.pdparams
+*.safetensors
+/models/
+/deploy/
+
+# 数据（涉及车牌与人脸，不入库）
+data/
+*.jpg
+*.jpeg
+*.png
+*.mp4
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
