@@ -232,7 +232,7 @@ def build():
             p = doc.add_paragraph()
             p.paragraph_format.first_line_indent = Pt(24)
             p.paragraph_format.line_spacing = 1.25
-            p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            p.alignment = (WD_ALIGN_PARAGRAPH.LEFT if "http" in s else WD_ALIGN_PARAGRAPH.JUSTIFY)
             # **bold** 片段
             s = s.replace("`", "")
             for seg in re.split(r"(<sup>.*?</sup>)", s):
